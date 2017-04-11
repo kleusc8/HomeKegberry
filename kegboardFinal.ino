@@ -11,6 +11,9 @@ static KegboardPacket gInputPacket;
 #define TIME_BETWEEN_POURS (30 * 1000)
 #define TIME_OF_POUR (20*1000)
 
+/* taking it off of the particle cloud*/
+SYSTEM_MODE(MANUAL);
+
 
 /* NOTE: D2 and A0 cannot be used at the same time b/c external Interrupt
 * line is shared */
@@ -42,11 +45,11 @@ typedef struct {
 
 static UptimeStat gUptimeStat;
 
-static uint8_t gSerialNumber[SERIAL_NUMBER_SIZE_BYTES] = "FORGE001";
+static uint8_t gSerialNumber[SERIAL_NUMBER_SIZE_BYTES] = "HOME001";
 
 /* Only supporting 2 meters per kegboard at the moment*/
-static unsigned long volatile gMeters[] = {0, 0};
-static unsigned long volatile gLastMeters[] = {0, 0};
+static unsigned long volatile gMeters[] = {0, 0, 0};
+static unsigned long volatile gLastMeters[] = {0, 0, 0};
 
 static uint16_t gProtocolVersion = 1;
 
@@ -57,17 +60,18 @@ static uint16_t gProtocolVersion = 1;
 void meter0Interrupt(void)
 {
   INCREMENT_METER(0);
-  digitalWrite(blueLEDPin, HIGH);
+  digitalWrite(meter0LEDPin, HIGH);
 }
 
 void meter1Interrupt(void)
 {
   INCREMENT_METER(1);
-  digitalWrite(redLEDPin, HIGH);
+  digitalWrite(meter1LEDPin, HIGH);
 }
 void meter2Interrupt(void)
 {
-  
+  INCREMENT_METER(2);
+  digitalWrite(meter2LEDPin, HIGH);
 }
 
 //
@@ -95,11 +99,15 @@ void writeMeterPacket(int channel)
   {
     if (0 == channel)
     {
-      digitalWrite(blueLEDPin, LOW);
+      digitalWrite(meter0LEDPin, LOW);
     }
-    else
+    else if (1 == channel)
     {
-      digitalWrite(redLEDPin, LOW);
+      digitalWrite(meter1LEDPin, LOW);
+    }
+    else if (2== channel)
+    {
+      digitalWrite(meter2LEDPin, LOW);
     }
     return;
   }
@@ -143,10 +151,13 @@ void setup()
   pinMode(tempPin, INPUT);
   pinMode(meter0Pin, INPUT_PULLUP);
   pinMode(meter1Pin, INPUT_PULLUP);
-  pinMode(blueLEDPin, OUTPUT);
-  pinMode(redLEDPin, OUTPUT);
+  pinMode(meter2Pin, INPUT_PULLUP);
+  pinMode(meter0LEDPin, OUTPUT);
+  pinMode(meter1LEDPin, OUTPUT);
+  pinMode(meter2LEDPin, OUTPUT);
   attachInterrupt(meter0Pin, meter0Interrupt, FALLING);
   attachInterrupt(meter1Pin, meter1Interrupt, FALLING);
+  attachInterrupt(meter2Pin, meter2Interrupt, FALLING);
   writeHelloPacket();
 
 }
@@ -182,6 +193,7 @@ void writeMeterPackets() {
 
   writeMeterPacket(0);
   writeMeterPacket(1);
+  writeMeterPacket(2);
 
 }
 
