@@ -214,6 +214,6 @@ void loop()
 {
   updateTimekeeping();
   writeMeterPackets();
-  writeTempPackets();
+  //writeTempPackets();
 
 }
